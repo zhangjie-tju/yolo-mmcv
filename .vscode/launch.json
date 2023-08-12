@@ -18,7 +18,7 @@
             "request": "launch",
             "program": "/home1/jiezhang/yolov8/yolo-git/yolo-mmcv/tools/test.py",
             "console": "integratedTerminal",
-            "cwd": "${fileDirname}",
+            "cwd": "${workspaceFolder}",
             "args": [
             "/home1/jiezhang/yolov8/yolo-git/yolo-mmcv/configs/yolov8/test.py"
             ]

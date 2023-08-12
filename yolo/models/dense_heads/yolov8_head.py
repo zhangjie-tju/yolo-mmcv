@@ -13,11 +13,11 @@ from mmcv.cnn import (ConvModule, bias_init_with_prob,
 from mmcv.runner import get_dist_info
 
 from mmdet.core import (build_assigner, build_bbox_coder, build_prior_generator, build_sampler, images_to_levels,
-                        multi_apply, multiclass_nms)
+                        multiclass_nms)
 from ..builder import HEADS, build_loss
 from mmdet.models.dense_heads.base_dense_head import BaseDenseHead
 from mmdet.models.dense_heads.dense_test_mixins import BBoxTestMixin
-from mmdet.models.utils import multi_apply
+from mmdet.core.utils import multi_apply
 from ..utils import make_divisible,gt_instances_preprocess
 
 @HEADS.register_module()
@@ -101,13 +101,9 @@ class YOLOV8Detect(BaseDenseHead, BBoxTestMixin):
 
         in_channels = []
         for channel in self.in_channels:
-            channel = make_divisible_v8(channel, widen_factor)
+            channel = make_divisible(channel, widen_factor)
             in_channels.append(channel)
         self.in_channels = in_channels
-        
-        self.num_classes = self.num_classes
-        self.featmap_strides = self.featmap_strides
-        self.num_levels = len(self.featmap_strides)
 
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
@@ -135,34 +131,6 @@ class YOLOV8Detect(BaseDenseHead, BBoxTestMixin):
             self.flatten_priors_train = None
             self.stride_tensor = None
         self._init_layers()
-
-    @property
-    def anchor_generator(self):
-
-        warnings.warn('DeprecationWarning: `anchor_generator` is deprecated, '
-                      'please use "prior_generator" instead')
-        return self.prior_generator
-
-    @property
-    def num_anchors(self):
-        """
-        Returns:
-            int: Number of anchors on each point of feature map.
-        """
-        warnings.warn('DeprecationWarning: `num_anchors` is deprecated, '
-                      'please use "num_base_priors" instead')
-        return self.num_base_priors
-
-    @property
-    def num_levels(self):
-        return len(self.featmap_strides)
-
-    @property
-    def num_attrib(self):
-        """int: number of attributes in pred_map, bboxes (4) +
-        objectness (1) + num_classes"""
-
-        return 5 + self.num_classes
 
     def _init_layers(self):
         self.cls_preds = nn.ModuleList()
@@ -445,3 +413,6 @@ class YOLOV8Detect(BaseDenseHead, BBoxTestMixin):
             loss_cls=loss_cls * num_imgs * world_size,
             loss_bbox=loss_bbox * num_imgs * world_size,
             loss_dfl=loss_dfl * num_imgs * world_size)
+
+    def get_bboxes(self, **kwargs):
+        pass

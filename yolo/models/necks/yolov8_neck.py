@@ -85,7 +85,6 @@ class YOLOV8Neck(BaseModule):
                                  out_c,
                                  num_blocks=num_blocks,
                                  add_identity=add_identity,
-                                 use_depthwise=use_depthwise,
                                  conv_cfg=conv_cfg,
                                  norm_cfg=norm_cfg,
                                  act_cfg=act_cfg)

@@ -8,22 +8,49 @@ model = dict(type='YOLOV5',
              pretrained=None,
              backbone=dict(type='CSPDarknetV8', deepen_factor=0.33, widen_factor=0.5),
              neck=dict(type='YOLOV8Neck', deepen_factor=0.33, widen_factor=0.5),
-             test_cfg=dict(nms_pre=1000,
-                           min_bbox_size=0,
-                           score_thr=0,
-                           conf_thr=0.001,
-                           nms=dict(type='nms', iou_threshold=0.6),
-                           max_per_img=300),
-             train_cfg=dict(assigner=dict(type='GridAssigner', pos_iou_thr=0.5, neg_iou_thr=0.3, min_pos_iou=0)),
-            #  bbox_head=dict(type='YOLOV5Detect',
-            #                 num_classes=317,
-            #                 anchor_generator=dict(type='YOLOAnchorGenerator',
-            #                                       base_sizes=[[(116, 90), (156, 198), (373, 326)],
-            #                                                   [(30, 61), (62, 45), (59, 119)],
-            #                                                   [(10, 13), (16, 30), (33, 23)]],
-            #                                       strides=[32, 16, 8]),
-            #                 bbox_coder=dict(type='YOLOV5BBoxCoder'),
-            #                 featmap_strides=[32, 16, 8])
+             bbox_head=dict(type='YOLOV8Detect',
+                            num_classes=1,
+                            in_channels=[256, 512, 1024],
+                            widen_factor=0.5,
+                            reg_max=16,
+                            norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
+                            act_cfg=dict(type='SiLU', inplace=True),
+                            featmap_strides=[8, 16, 32],
+                            prior_generator=dict(
+            type='mmdet.MlvlPointGenerator', offset=0.5, strides=[8, 16, 32]),
+        bbox_coder=dict(type='DistancePointBBoxCoder'),
+        loss_cls=dict(
+            type='mmdet.CrossEntropyLoss',
+            use_sigmoid=True,
+            reduction='none',
+            loss_weight=0.5),
+        loss_bbox=dict(
+            type='IoULoss',
+            iou_mode='ciou',
+            bbox_format='xyxy',
+            reduction='sum',
+            loss_weight=7.5,
+            return_iou=False),
+        loss_dfl=dict(
+            type='mmdet.DistributionFocalLoss',
+            reduction='mean',
+            loss_weight=0.375)
+                            ),
+        train_cfg=dict(
+            assigner=dict(
+                type='BatchTaskAlignedAssigner',
+                num_classes=1,
+                use_ciou=True,
+                topk=10,
+                alpha=0.5,
+                beta=6.0,
+                eps=1e-09)),
+        test_cfg=dict(
+            multi_label=True,
+            nms_pre=30000,
+            score_thr=0.001,
+            nms=dict(type='nms', iou_threshold=0.7),
+            max_per_img=300)
             )
 data_root = '../datasets/cat/'
 dataset_type = 'CocoDataset'
